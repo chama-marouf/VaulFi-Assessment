@@ -4,6 +4,7 @@ import { TextInput, Button, Text } from "react-native-paper"
 import { useForm, Controller } from "react-hook-form"
 import * as Yup from "yup"
 import { yupResolver } from "@hookform/resolvers/yup"
+import { signup } from "../services/authService"
 
 const SignupSchema = Yup.object().shape({
     email: Yup.string().email("Invalid email").required("Email is required"),
@@ -21,13 +22,15 @@ const SignupScreen = ({ navigation }) => {
         resolver: yupResolver(SignupSchema),
     })
 
-    const onSubmit = async (data) => {
+    const onSubmit = async (data: { email: string; password: string }) => {
         try {
-            // Call API here (e.g., axios.post('/signup', data))
-            console.log("Signup Successful:", data)
-            navigation.navigate("PhoneNumber")
-        } catch (error) {
-            console.error("Signup failed:", error)
+            const response = await signup(data.email, data.password)
+            console.log("Signup successful:", response.data)
+        } catch (error: any) {
+            console.error(
+                "Signup failed:",
+                error.response?.data || error.message
+            )
         }
     }
 

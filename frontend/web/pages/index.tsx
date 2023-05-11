@@ -6,6 +6,8 @@ import FormField from "@/components/FormField"
 import { SignupSchema } from "@/utils/validationSchemas"
 import { useRouter } from "next/router"
 
+import { signup } from "../services/authService"
+
 interface SignupFormInputs {
     email: string
     password: string
@@ -21,12 +23,15 @@ const Signup = () => {
         resolver: yupResolver(SignupSchema),
     })
 
-    const onSubmit = async (data: SignupFormInputs) => {
+    const onSubmit = async (data: { email: string; password: string }) => {
         try {
-            console.log("Signup data:", data)
-            router.push("/phone-number")
-        } catch (error) {
-            console.error("Signup failed:", error)
+            const response = await signup(data.email, data.password)
+            console.log("Signup successful:", response.data)
+        } catch (error: any) {
+            console.error(
+                "Signup failed:",
+                error.response?.data || error.message
+            )
         }
     }
 
