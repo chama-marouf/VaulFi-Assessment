@@ -43,10 +43,19 @@ const Signup = () => {
     const onSubmit = async (data: SignupFormInputs) => {
         try {
             setError(null)
-            await authService.signup()
-            console.log("Signup successful")
-            setCurrentStep(SignupStep.PHONE_NUMBER)
-            router.push("/phone-number")
+            const response = await authService.signup({
+                email: data.email,
+                password: data.password,
+            })
+
+            if (response.status === "success") {
+                // Store email for phone verification step
+                localStorage.setItem("userEmail", data.email)
+                setCurrentStep(SignupStep.PHONE_NUMBER)
+                router.push("/phone-number")
+            } else {
+                setError(response.message || "An error occurred during signup")
+            }
         } catch (err) {
             const error = err as Error
             setError(error.message || "An error occurred during signup")

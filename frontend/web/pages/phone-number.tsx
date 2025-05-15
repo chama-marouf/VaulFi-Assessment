@@ -1,13 +1,14 @@
 import React from "react"
 import { useForm, Controller } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
-import { Button, Container, Typography, Box, Paper } from "@mui/material"
+import { Button, Container, Typography, Box, Paper, Alert } from "@mui/material"
 import FormField from "@/components/FormField"
 import { PhoneSchema } from "@/utils/validationSchemas"
 import { useRouter } from "next/router"
 import SignupProgress from "@/components/signup/SignupProgress"
 import { SignupStep } from "@/types/auth"
 import HelpButton from "@/components/HelpButton"
+import { authService } from "@/services/auth"
 
 interface PhoneFormInputs {
     phoneNumber: string
@@ -15,6 +16,7 @@ interface PhoneFormInputs {
 
 const PhoneNumber = () => {
     const router = useRouter()
+    const [error, setError] = React.useState<string | null>(null)
     const {
         control,
         handleSubmit,
@@ -25,10 +27,29 @@ const PhoneNumber = () => {
 
     const onSubmit = async (data: PhoneFormInputs) => {
         try {
-            console.log("Phone number submitted:", data)
-            router.push("/otp")
+            setError(null)
+            console.log("Submitting phone number:", data.phoneNumber)
+            const response = await authService.verifyPhone(data.phoneNumber)
+            console.log("Phone verification response:", response)
+
+            if (response.status === "success" && response.data?.otpId) {
+                // Store OTP ID in localStorage for the next step
+                localStorage.setItem("otpId", response.data.otpId)
+                router.push("/otp")
+            } else {
+                const errorMessage =
+                    response.message ||
+                    "Unknown error occurred during phone verification"
+                console.error("Phone verification failed:", errorMessage)
+                setError(errorMessage)
+            }
         } catch (error) {
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : "An unexpected error occurred"
             console.error("Phone number submission failed:", error)
+            setError(errorMessage)
         }
     }
 
@@ -74,6 +95,11 @@ const PhoneNumber = () => {
                         Add your Number
                     </Typography>
                     <SignupProgress currentStep={SignupStep.PHONE_NUMBER} />
+                    {error && (
+                        <Alert severity='error' sx={{ mb: 2 }}>
+                            {error}
+                        </Alert>
+                    )}
                     <Typography
                         variant='subtitle1'
                         align='center'

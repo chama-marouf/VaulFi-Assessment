@@ -1,13 +1,14 @@
 import React from "react"
 import { useForm, Controller } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
-import { Button, Container, Typography, Box, Paper } from "@mui/material"
+import { Button, Container, Typography, Box, Paper, Alert } from "@mui/material"
 import FormField from "@/components/FormField"
 import { OTPSchema } from "@/utils/validationSchemas"
 import { useRouter } from "next/router"
 import SignupProgress from "@/components/signup/SignupProgress"
 import { SignupStep } from "@/types/auth"
 import HelpButton from "@/components/HelpButton"
+import { authService } from "@/services/auth"
 
 interface OTPFormInputs {
     otp: string
@@ -15,6 +16,7 @@ interface OTPFormInputs {
 
 const OTP = () => {
     const router = useRouter()
+    const [error, setError] = React.useState<string | null>(null)
     const {
         control,
         handleSubmit,
@@ -25,10 +27,63 @@ const OTP = () => {
 
     const onSubmit = async (data: OTPFormInputs) => {
         try {
-            console.log("OTP verified:", data)
-            router.push("/success")
+            setError(null)
+            const otpId = localStorage.getItem("otpId")
+            if (!otpId) {
+                throw new Error("OTP session expired. Please try again.")
+            }
+
+            console.log("Verifying OTP:", { otpId, code: data.otp })
+            const response = await authService.verifyOTP(otpId, data.otp)
+            console.log("OTP verification response:", response)
+
+            if (response.status === "success" && response.data?.verified) {
+                // Store the auth token if provided
+                if (response.data.token) {
+                    localStorage.setItem("authToken", response.data.token)
+                }
+                router.push("/success")
+            } else {
+                const errorMessage =
+                    response.message || "OTP verification failed"
+                console.error("OTP verification failed:", errorMessage)
+                setError(errorMessage)
+            }
         } catch (error) {
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : "An unexpected error occurred"
             console.error("OTP verification failed:", error)
+            setError(errorMessage)
+        }
+    }
+
+    const handleResendOTP = async () => {
+        try {
+            setError(null)
+            const otpId = localStorage.getItem("otpId")
+            if (!otpId) {
+                throw new Error("OTP session expired. Please try again.")
+            }
+
+            const response = await authService.resendOTP(otpId)
+
+            if (response.status === "success" && response.data) {
+                localStorage.setItem("otpId", response.data.otpId)
+                // Show success message to user
+            } else {
+                const errorMessage = response.message || "Failed to resend OTP"
+                console.error("Failed to resend OTP:", errorMessage)
+                setError(errorMessage)
+            }
+        } catch (error) {
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : "An unexpected error occurred"
+            console.error("Failed to resend OTP:", error)
+            setError(errorMessage)
         }
     }
 
@@ -74,6 +129,11 @@ const OTP = () => {
                         Verify OTP
                     </Typography>
                     <SignupProgress currentStep={SignupStep.OTP_VERIFICATION} />
+                    {error && (
+                        <Alert severity='error' sx={{ mb: 2 }}>
+                            {error}
+                        </Alert>
+                    )}
                     <Typography
                         variant='subtitle1'
                         align='center'
@@ -100,8 +160,10 @@ const OTP = () => {
                                 render={({ field }) => (
                                     <FormField
                                         {...field}
-                                        label='OTP'
+                                        label='4-Digit OTP'
                                         type='text'
+                                        placeholder='Enter 4-digit code'
+                                        inputProps={{ maxLength: 4 }}
                                         errorText={errors.otp?.message}
                                     />
                                 )}
@@ -127,6 +189,22 @@ const OTP = () => {
                                 },
                             }}>
                             {isSubmitting ? "Verifying..." : "Verify"}
+                        </Button>
+                        <Button
+                            onClick={handleResendOTP}
+                            variant='text'
+                            fullWidth
+                            sx={{
+                                mt: 1,
+                                textTransform: "none",
+                                fontSize: "0.875rem",
+                                color: "text.secondary",
+                                fontFamily: "Inter, sans-serif",
+                                "&:hover": {
+                                    textDecoration: "underline",
+                                },
+                            }}>
+                            Didn't receive the code? Resend
                         </Button>
                     </form>
                 </Paper>

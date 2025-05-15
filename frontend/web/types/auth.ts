@@ -8,8 +8,8 @@ export enum SignupStep {
 export interface SignupFormData {
     email: string
     password: string
-    phoneNumber: string
-    countryCode: string
+    phoneNumber?: string
+    countryCode?: string
 }
 
 export interface ValidationErrors {
@@ -17,4 +17,26 @@ export interface ValidationErrors {
     password?: string
     phoneNumber?: string
     otp?: string
+}
+
+export interface ApiResponse<T = any> {
+    status: "success" | "error"
+    data?: T
+    message?: string
+}
+
+export interface SignupResponse {
+    userId: string
+    email: string
+    phoneNumber: string
+}
+
+export interface OTPResponse {
+    otpId: string
+    expiresAt: string
+}
+
+export interface VerifyOTPResponse {
+    verified: boolean
+    token?: string
 }
