@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React from "react"
 import {
     View,
     Text,
@@ -6,86 +6,153 @@ import {
     SafeAreaView,
     TextInput,
     TouchableOpacity,
+    ActivityIndicator,
 } from "react-native"
-import { useNavigation } from "@react-navigation/native"
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native"
+import { Ionicons } from "@expo/vector-icons"
+import { useForm, Controller } from "react-hook-form"
+import HelpButton from "../components/HelpButton"
+import ProgressBar from "../components/ProgressBar"
+import { useAuth } from "../hooks/useAuth"
+import {
+    RootStackNavigationProp,
+    RootStackParamList,
+} from "../types/navigation"
 
-// Helper Components
-const BackButton = ({ navigation }) => (
-    <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}>
-        <Text style={styles.backButtonText}>←</Text>
-    </TouchableOpacity>
-)
+type FormData = {
+    phoneNumber: string
+    countryCode: string
+}
 
-const HelpButton = () => (
-    <TouchableOpacity style={styles.helpButton}>
-        <Text style={styles.helpButtonText}>?</Text>
-    </TouchableOpacity>
-)
-
-const ProgressBar = ({ currentStep, totalSteps }) => (
-    <View style={styles.progressBarContainer}>
-        {Array.from({ length: totalSteps }).map((_, index) => (
-            <View
-                key={index}
-                style={[
-                    styles.progressBarSegment,
-                    {
-                        backgroundColor:
-                            index < currentStep ? "#000080" : "#E0E0E0",
-                    },
-                ]}
-            />
-        ))}
-    </View>
-)
+type PhoneNumberScreenRouteProp = RouteProp<RootStackParamList, "PhoneNumber">
 
 const PhoneNumberScreen = () => {
-    const navigation = useNavigation()
-    const [countryCode, setCountryCode] = useState("+213")
-    const [phoneNumber, setPhoneNumber] = useState("")
+    const navigation = useNavigation<RootStackNavigationProp>()
+    const route = useRoute<PhoneNumberScreenRouteProp>()
+    const { signup } = useAuth()
+    const [loading, setLoading] = React.useState(false)
+    const [error, setError] = React.useState<string | null>(null)
+
+    const {
+        control,
+        handleSubmit,
+        formState: { errors },
+    } = useForm<FormData>()
+
+    const onSubmit = async (data: FormData) => {
+        try {
+            setLoading(true)
+            setError(null)
+            await signup({
+                email: route.params.email,
+                password: route.params.password,
+                phoneNumber: data.phoneNumber,
+                countryCode: data.countryCode,
+            })
+            navigation.navigate("OTP", {
+                email: route.params.email,
+                phoneNumber: data.phoneNumber,
+                countryCode: data.countryCode,
+            })
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "An error occurred")
+        } finally {
+            setLoading(false)
+        }
+    }
 
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
-                <BackButton navigation={navigation} />
-                <Text style={styles.headerTitle}>Sign Up</Text>
+                <TouchableOpacity
+                    onPress={() => navigation.goBack()}
+                    style={styles.backButton}>
+                    <Ionicons name='arrow-back' size={24} color='#000' />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Phone Number</Text>
                 <HelpButton />
             </View>
 
-            <ProgressBar currentStep={3} totalSteps={4} />
-            <Text style={styles.stepIndicator}>3 of 4</Text>
+            <ProgressBar currentStep={2} totalSteps={4} />
+            <Text style={styles.stepIndicator}>2 of 4</Text>
 
             <View style={styles.contentContainer}>
-                <Text style={styles.title}>Add your Number</Text>
+                <Text style={styles.title}>Enter Phone Number</Text>
                 <Text style={styles.subtitle}>
-                    Please add your phone number. We will send you a
-                    verification code to confirm it.
+                    We'll send you a verification code
                 </Text>
 
-                <Text style={styles.inputLabel}>Phone Number</Text>
                 <View style={styles.phoneInputContainer}>
-                    <View style={styles.countryCodeContainer}>
-                        <Text style={styles.countryCodeText}>
-                            {countryCode}
-                        </Text>
-                    </View>
-                    <TextInput
-                        style={styles.phoneInput}
-                        placeholder='560 01 76 52'
-                        value={phoneNumber}
-                        onChangeText={setPhoneNumber}
-                        keyboardType='phone-pad'
+                    <Controller
+                        control={control}
+                        rules={{
+                            required: "Country code is required",
+                        }}
+                        render={({ field: { onChange, value } }) => (
+                            <View style={styles.countryCodeContainer}>
+                                <TextInput
+                                    style={[
+                                        styles.countryCodeInput,
+                                        errors.countryCode && styles.inputError,
+                                    ]}
+                                    placeholder='+1'
+                                    keyboardType='phone-pad'
+                                    onChangeText={onChange}
+                                    value={value}
+                                />
+                                {errors.countryCode && (
+                                    <Text style={styles.errorText}>
+                                        {errors.countryCode.message}
+                                    </Text>
+                                )}
+                            </View>
+                        )}
+                        name='countryCode'
+                    />
+
+                    <Controller
+                        control={control}
+                        rules={{
+                            required: "Phone number is required",
+                            pattern: {
+                                value: /^[0-9]{10}$/,
+                                message: "Invalid phone number",
+                            },
+                        }}
+                        render={({ field: { onChange, value } }) => (
+                            <View style={styles.phoneNumberContainer}>
+                                <TextInput
+                                    style={[
+                                        styles.phoneNumberInput,
+                                        errors.phoneNumber && styles.inputError,
+                                    ]}
+                                    placeholder='Phone Number'
+                                    keyboardType='phone-pad'
+                                    onChangeText={onChange}
+                                    value={value}
+                                />
+                                {errors.phoneNumber && (
+                                    <Text style={styles.errorText}>
+                                        {errors.phoneNumber.message}
+                                    </Text>
+                                )}
+                            </View>
+                        )}
+                        name='phoneNumber'
                     />
                 </View>
 
+                {error && <Text style={styles.errorText}>{error}</Text>}
+
                 <TouchableOpacity
                     style={styles.primaryButton}
-                    onPress={() =>
-                        navigation.navigate("OTP", { isEmailOTP: false })
-                    }>
-                    <Text style={styles.primaryButtonText}>Next</Text>
+                    onPress={handleSubmit(onSubmit)}
+                    disabled={loading}>
+                    {loading ? (
+                        <ActivityIndicator color='#fff' />
+                    ) : (
+                        <Text style={styles.primaryButtonText}>Continue</Text>
+                    )}
                 </TouchableOpacity>
             </View>
         </SafeAreaView>
@@ -104,41 +171,12 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingVertical: 15,
     },
+    backButton: {
+        width: 30,
+    },
     headerTitle: {
         fontSize: 18,
         fontWeight: "600",
-    },
-    backButton: {
-        width: 30,
-        height: 30,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    backButtonText: {
-        fontSize: 22,
-        color: "#000080",
-    },
-    helpButton: {
-        width: 30,
-        height: 30,
-        borderWidth: 1,
-        borderColor: "#E0E0E0",
-        borderRadius: 15,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    helpButtonText: {
-        fontSize: 16,
-        color: "#000",
-    },
-    progressBarContainer: {
-        flexDirection: "row",
-        paddingHorizontal: 20,
-    },
-    progressBarSegment: {
-        flex: 1,
-        height: 4,
-        marginRight: 4,
     },
     stepIndicator: {
         fontSize: 12,
@@ -163,39 +201,44 @@ const styles = StyleSheet.create({
         color: "#666",
         marginBottom: 20,
     },
-    inputLabel: {
-        fontSize: 14,
-        color: "#666",
-        marginBottom: 8,
-    },
     phoneInputContainer: {
         flexDirection: "row",
         marginBottom: 15,
     },
     countryCodeContainer: {
-        borderWidth: 1,
-        borderColor: "#E0E0E0",
-        borderRadius: 8,
-        height: 50,
-        paddingHorizontal: 15,
-        justifyContent: "center",
+        width: 80,
         marginRight: 10,
     },
-    countryCodeText: {
-        fontSize: 16,
-    },
-    phoneInput: {
-        flex: 1,
-        borderWidth: 1,
-        borderColor: "#E0E0E0",
-        borderRadius: 8,
+    countryCodeInput: {
         height: 50,
+        borderWidth: 1,
+        borderColor: "#ddd",
+        borderRadius: 8,
         paddingHorizontal: 15,
         fontSize: 16,
+    },
+    phoneNumberContainer: {
+        flex: 1,
+    },
+    phoneNumberInput: {
+        height: 50,
+        borderWidth: 1,
+        borderColor: "#ddd",
+        borderRadius: 8,
+        paddingHorizontal: 15,
+        fontSize: 16,
+    },
+    inputError: {
+        borderColor: "#ff3b30",
+    },
+    errorText: {
+        color: "#ff3b30",
+        fontSize: 12,
+        marginTop: 5,
     },
     primaryButton: {
         backgroundColor: "#000080",
-        borderRadius: 8,
+        borderRadius: 50,
         height: 50,
         justifyContent: "center",
         alignItems: "center",

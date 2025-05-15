@@ -51,7 +51,6 @@ const SuccessScreen = () => {
                     style={[styles.primaryButton, styles.homeButton]}
                     onPress={() => {
                         // Navigate to home screen
-                        // This would normally go to your app's main screen
                         console.log("Navigate to home screen")
                     }}>
                     <Text style={styles.primaryButtonText}>

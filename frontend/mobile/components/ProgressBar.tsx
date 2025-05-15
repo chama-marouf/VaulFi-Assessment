@@ -36,7 +36,6 @@ const styles = StyleSheet.create({
     progressBarSegment: {
         flex: 1,
         height: 4,
-        marginRight: 4,
     },
 })
 

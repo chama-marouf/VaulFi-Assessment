@@ -1,4 +1,3 @@
-// OTPScreen.tsx
 import React from "react"
 import {
     View,
@@ -24,12 +23,12 @@ type FormData = {
     otp: string
 }
 
-type OTPScreenRouteProp = RouteProp<RootStackParamList, "OTP">
+type PhoneOTPScreenRouteProp = RouteProp<RootStackParamList, "PhoneOTP">
 
-const OTPScreen = () => {
+const PhoneOTPScreen = () => {
     const navigation = useNavigation<RootStackNavigationProp>()
-    const route = useRoute<OTPScreenRouteProp>()
-    const { verifyOTP, resendOTP } = useAuth()
+    const route = useRoute<PhoneOTPScreenRouteProp>()
+    const { verifyPhoneOTP, resendPhoneOTP } = useAuth()
     const [loading, setLoading] = React.useState(false)
     const [resendLoading, setResendLoading] = React.useState(false)
     const [error, setError] = React.useState<string | null>(null)
@@ -44,8 +43,12 @@ const OTPScreen = () => {
         try {
             setLoading(true)
             setError(null)
-            await verifyOTP(data.otp)
-            navigation.navigate("SignupSuccess")
+            const response = await verifyPhoneOTP(data.otp)
+            if (response.success) {
+                navigation.navigate("SignupSuccess")
+            } else {
+                setError(response.error || "Failed to verify phone number")
+            }
         } catch (err) {
             setError(err instanceof Error ? err.message : "An error occurred")
         } finally {
@@ -57,7 +60,10 @@ const OTPScreen = () => {
         try {
             setResendLoading(true)
             setError(null)
-            await resendOTP()
+            const response = await resendPhoneOTP()
+            if (!response.success) {
+                setError(response.error || "Failed to resend OTP")
+            }
         } catch (err) {
             setError(err instanceof Error ? err.message : "An error occurred")
         } finally {
@@ -73,12 +79,12 @@ const OTPScreen = () => {
                     style={styles.backButton}>
                     <Ionicons name='arrow-back' size={24} color='#000' />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Verify OTP</Text>
+                <Text style={styles.headerTitle}>Verify Phone</Text>
                 <HelpButton />
             </View>
 
-            <ProgressBar currentStep={3} totalSteps={4} />
-            <Text style={styles.stepIndicator}>3 of 4</Text>
+            <ProgressBar currentStep={4} totalSteps={5} />
+            <Text style={styles.stepIndicator}>4 of 5</Text>
 
             <View style={styles.contentContainer}>
                 <Text style={styles.title}>Enter Verification Code</Text>
@@ -233,4 +239,4 @@ const styles = StyleSheet.create({
     },
 })
 
-export default OTPScreen
+export default PhoneOTPScreen
