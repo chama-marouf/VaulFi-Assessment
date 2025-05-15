@@ -1,36 +1,121 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# VaulFi Web App
 
-## Getting Started
+A Next.js web application for VaulFi, featuring a secure and user-friendly authentication system.
 
-First, run the development server:
+## Features
 
+- Multi-step signup process with email and phone verification
+- Secure authentication flow with OTP verification
+- Form validation and error handling
+- Progress tracking across signup steps
+- Modern and responsive UI design
+- TypeScript support for better type safety
+
+## Prerequisites
+
+- Node.js (v14 or higher)
+- npm or yarn
+
+## Installation
+
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd frontend/web
+```
+
+2. Install dependencies:
+```bash
+npm install
+# or
+yarn install
+```
+
+## Running the App
+
+### Development
 ```bash
 npm run dev
 # or
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Production
+```bash
+npm run build
+npm start
+# or
+yarn build
+yarn start
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+frontend/web/
+├── api/              # API integration and endpoints
+├── components/       # Reusable UI components
+├── hooks/           # Custom React hooks
+├── pages/           # Next.js pages
+├── public/          # Static assets
+├── services/        # Business logic and services
+├── styles/          # Global styles
+├── types/           # TypeScript type definitions
+└── utils/           # Utility functions
+```
 
-## Learn More
+## Authentication Flow
 
-To learn more about Next.js, take a look at the following resources:
+1. **Initial Signup**
+   - Email and password collection
+   - Basic form validation
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2. **Phone Number Collection**
+   - Phone number input
+   - Format validation
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. **Phone Verification**
+   - OTP sent to user's phone
+   - 6-digit code verification
+   - Resend OTP functionality
 
-## Deploy on Vercel
+4. **Success Screen**
+   - Confirmation of successful signup
+   - Navigation to main app
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Development
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Code Style
+
+- Follow TypeScript best practices
+- Use functional components with hooks
+- Implement proper error handling
+- Maintain consistent code formatting
+
+### Testing
+
+```bash
+# Run tests
+npm test
+# or
+yarn test
+```
+
+## Dependencies
+
+- Next.js
+- React
+- Material-UI
+- React Hook Form
+- TypeScript
+- Yup
+
+## Contributing
+
+1. Create a new branch for your feature
+2. Make your changes
+3. Submit a pull request
+
+## License
+
+[Add your license information here]
