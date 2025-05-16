@@ -14,12 +14,14 @@ export const createUserOpts = {
                 type: 'object',
                 properties: {
                     status: { type: 'string' },
+                    message: { type: 'string' },
                 },
             },
             400: {
                 type: 'object',
                 properties: {
                     status: { type: 'string' },
+                    message: { type: 'string' },
                 },
             },
         },
@@ -42,6 +44,20 @@ export const addPhoneNumberOpts = {
                 type: 'object',
                 properties: {
                     status: { type: 'string' },
+                    data: {
+                        type: 'object',
+                        properties: {
+                            otpId: { type: 'string' },
+                            expiresAt: { type: 'string' },
+                        },
+                    },
+                },
+            },
+            400: {
+                type: 'object',
+                properties: {
+                    status: { type: 'string' },
+                    message: { type: 'string' },
                 },
             },
         },
@@ -53,9 +69,10 @@ export const validateOtpOpts = {
         tags: ['User'],
         body: {
             type: 'object',
-            required: ['otp'],
+            required: ['otpId', 'code'],
             properties: {
-                otp: { type: 'string' },
+                otpId: { type: 'string' },
+                code: { type: 'string' },
             },
         },
         response: {
@@ -63,6 +80,21 @@ export const validateOtpOpts = {
                 type: 'object',
                 properties: {
                     status: { type: 'string' },
+                    data: {
+                        type: 'object',
+                        properties: {
+                            verified: { type: 'boolean' },
+                            token: { type: 'string' },
+                        },
+                    },
+                    message: { type: 'string' },
+                },
+            },
+            400: {
+                type: 'object',
+                properties: {
+                    status: { type: 'string' },
+                    message: { type: 'string' },
                 },
             },
         },

@@ -43,18 +43,34 @@ const PhoneNumberScreen = () => {
         try {
             setLoading(true)
             setError(null)
-            await signup({
+            console.log("Submitting phone number with:", {
+                email: route.params.email,
+                phoneNumber: data.phoneNumber,
+                countryCode: data.countryCode,
+            })
+            const response = await signup({
                 email: route.params.email,
                 password: route.params.password,
                 phoneNumber: data.phoneNumber,
                 countryCode: data.countryCode,
             })
-            navigation.navigate("OTP", {
-                email: route.params.email,
-                phoneNumber: data.phoneNumber,
-                countryCode: data.countryCode,
-            })
+            console.log("Phone number submission response:", response)
+            if (response.status === "success" && response.data?.otpId) {
+                console.log(
+                    "Navigating to OTP verification with otpId:",
+                    response.data.otpId
+                )
+                navigation.navigate("OTPVerification", {
+                    email: route.params.email,
+                    phoneNumber: data.phoneNumber,
+                    otpId: response.data.otpId,
+                })
+            } else {
+                console.error("No otpId in response:", response)
+                setError("Failed to get OTP. Please try again.")
+            }
         } catch (err) {
+            console.error("Phone number submission error:", err)
             setError(err instanceof Error ? err.message : "An error occurred")
         } finally {
             setLoading(false)

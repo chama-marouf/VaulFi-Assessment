@@ -10,10 +10,10 @@ export type RootStackParamList = {
         email: string
         password: string
     }
-    PhoneOTP: {
+    OTPVerification: {
         email: string
         phoneNumber: string
-        countryCode: string
+        otpId: string
     }
     SignupSuccess: undefined
     Main: undefined

@@ -1,27 +1,24 @@
 import { useState } from "react"
-import {
-    signup,
-    verifyOtp,
-    resendOtp,
-    verifyPhoneOtp,
-} from "../services/authService"
+import { authService } from "../services/authService"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 import {
     SignupFormData,
-    OtpVerificationData,
     ApiResponse,
-    UserData,
-} from "@shared/types/auth"
+    SignupResponse,
+    OTPResponse,
+    VerifyOTPResponse,
+} from "../types/auth"
 
 export type UseAuthReturn = {
     loading: boolean
     error: string | null
-    signup: (data: SignupFormData) => Promise<ApiResponse<{ email: string }>>
-    verifyEmailOTP: (otp: string) => Promise<ApiResponse<UserData>>
-    resendEmailOTP: () => Promise<ApiResponse<{ message: string }>>
-    verifyPhoneOTP: (
-        otp: string
-    ) => Promise<ApiResponse<{ phoneNumber: string }>>
-    resendPhoneOTP: () => Promise<ApiResponse<{ message: string }>>
+    signup: (data: SignupFormData) => Promise<ApiResponse<SignupResponse>>
+    verifyPhone: (phoneNumber: string) => Promise<ApiResponse<OTPResponse>>
+    verifyOTP: (
+        otpId: string,
+        code: string
+    ) => Promise<ApiResponse<VerifyOTPResponse>>
+    resendOTP: (otpId: string) => Promise<ApiResponse<OTPResponse>>
     login: (email: string, password: string) => Promise<void>
     logout: () => void
     isAuthenticated: boolean
@@ -41,8 +38,8 @@ export const useAuth = (): UseAuthReturn => {
             setLoading(true)
             setError(null)
             const response = await apiCall()
-            if (!response.success) {
-                setError(response.error || "An unexpected error occurred")
+            if (response.status !== "success") {
+                setError(response.message || "An unexpected error occurred")
             }
             return response
         } catch (err: any) {
@@ -68,13 +65,12 @@ export const useAuth = (): UseAuthReturn => {
     return {
         loading,
         error,
-        signup: (data) => handleApiCall(() => signup(data)),
-        verifyEmailOTP: (otp) =>
-            handleApiCall(() => verifyOtp({ email: user?.email, otp })),
-        resendEmailOTP: () => handleApiCall(() => resendOtp(user?.email)),
-        verifyPhoneOTP: (otp) =>
-            handleApiCall(() => verifyPhoneOtp({ email: user?.email, otp })),
-        resendPhoneOTP: () => handleApiCall(() => resendOtp(user?.email)),
+        signup: (data) => handleApiCall(() => authService.signup(data)),
+        verifyPhone: (phoneNumber) =>
+            handleApiCall(() => authService.verifyPhone(phoneNumber)),
+        verifyOTP: (otpId, code) =>
+            handleApiCall(() => authService.verifyOTP(otpId, code)),
+        resendOTP: (otpId) => handleApiCall(() => authService.resendOTP(otpId)),
         login,
         logout,
         isAuthenticated,

@@ -14,7 +14,10 @@ import { useForm, Controller } from "react-hook-form"
 import HelpButton from "../components/HelpButton"
 import ProgressBar from "../components/ProgressBar"
 import { useAuth } from "../hooks/useAuth"
-import { SignupStep } from "@shared/types/auth"
+import { SignupStep } from "../types/auth"
+import { RootStackParamList } from "../types/navigation"
+import { NativeStackNavigationProp } from "@react-navigation/native-stack"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 
 type FormData = {
     email: string
@@ -22,8 +25,13 @@ type FormData = {
     confirmPassword: string
 }
 
+type SignupScreenNavigationProp = NativeStackNavigationProp<
+    RootStackParamList,
+    "Signup"
+>
+
 const SignupScreen = () => {
-    const navigation = useNavigation()
+    const navigation = useNavigation<SignupScreenNavigationProp>()
     const { signup, loading, error } = useAuth()
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -46,10 +54,10 @@ const SignupScreen = () => {
             const response = await signup({
                 email: data.email,
                 password: data.password,
-                phoneNumber: "", // Will be collected in the next step
-                countryCode: "", // Will be collected in the next step
             })
-            if (response.success) {
+            if (response.status === "success") {
+                // Store email for phone verification
+                await AsyncStorage.setItem("userEmail", data.email)
                 // Navigate to phone number step
                 navigation.navigate("PhoneNumber", {
                     email: data.email,

@@ -1,10 +1,23 @@
 import axios from "axios"
 import Constants from "expo-constants"
-import { API_ENDPOINTS } from "@shared/types/auth"
 import AsyncStorage from "@react-native-async-storage/async-storage"
+import { Platform } from "react-native"
 
 // Get the API URL from environment variables or use a default
-const API_URL = Constants.expoConfig?.extra?.apiUrl || "http://localhost:3001"
+const getApiUrl = () => {
+    const envUrl = Constants.expoConfig?.extra?.apiUrl
+    if (envUrl) return envUrl
+
+    // Default URLs for different platforms
+    if (Platform.OS === "android") {
+        return "http://10.0.2.2:3000" // Android emulator
+    }
+    return "http://localhost:3000" // iOS simulator
+}
+
+const API_URL = getApiUrl()
+
+console.log("API URL:", API_URL) // For debugging
 
 const API = axios.create({
     baseURL: API_URL,
@@ -18,7 +31,7 @@ const API = axios.create({
 API.interceptors.request.use(
     async (config) => {
         try {
-            const token = await AsyncStorage.getItem("token")
+            const token = await AsyncStorage.getItem("authToken")
             if (token) {
                 config.headers.Authorization = `Bearer ${token}`
             }
@@ -37,24 +50,17 @@ API.interceptors.request.use(
 API.interceptors.response.use(
     (response) => response,
     (error) => {
+        if (error.message === "Network Error") {
+            console.error(
+                "Network Error - Unable to connect to API at:",
+                API_URL
+            )
+        }
         const message =
             error.response?.data?.message || "An unexpected error occurred"
-
-        // Handle specific error cases
-        if (error.response?.status === 401) {
-            // Handle unauthorized access
-
-            console.log("Unauthorized access")
-        } else if (error.response?.status === 403) {
-            // Handle forbidden access
-            console.log("Forbidden access")
-        }
-
-        console.error(message)
-
+        console.error("API Error:", message)
         return Promise.reject(error)
     }
 )
 
-export { API_ENDPOINTS }
 export default API
